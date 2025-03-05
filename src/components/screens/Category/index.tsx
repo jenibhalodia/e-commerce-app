@@ -5,8 +5,13 @@ import { Autocomplete, Box, Modal, TextField } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { ImCross } from "react-icons/im";
 import InputComponent from "@/components/core/Input";
-import { addCategory, getCategoryTable } from "@/services/page";
+import {
+  addCategory,
+  deleteCategoryTable,
+  getCategoryTable,
+} from "@/services/page";
 import { toast } from "react-toastify";
+import EditModal from "./editmodal";
 
 function CategoryComponent() {
   interface TableHeader {
@@ -32,13 +37,34 @@ function CategoryComponent() {
   const [columns, setColumns] = useState<TableHeader[]>([]);
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
+  const [selectedRow, setSelectedRow] = useState<any>(null);
+  const [editOpen, setEditOpen] = useState(false);
 
-  const handleEdit = (row: any) => {
+  const handleEdit =(row: any) => {
     console.log("Edit clicked", row);
+    setSelectedRow(row);
+    setEditOpen(true);
   };
 
-  const handleDelete = (row: any) => {
-    console.log("Delete clicked", row);
+  const handleDelete = async (row: any) => {
+    const _id = Array.isArray(row.id) ? row.id : [row.id];
+    console.log("Delete clicked", row.id);
+    try {
+      const response = await deleteCategoryTable(_id);
+      console.log("response", response);
+      if (response.statusCode === 200) {
+        const newData = await getCategoryTable();
+        console.log("newdata", newData);
+        if (newData.statusCode === 200) {
+          setData(newData.data);
+          toast.success("Category deleted");
+        } else {
+          toast.error("Error while deleting category");
+        }
+      } else {
+        toast.error("Error while deleting category");
+      }
+    } catch (error) {}
   };
 
   const handleInfo = (row: any) => {
@@ -158,7 +184,7 @@ function CategoryComponent() {
                   disablePortal
                   options={Status}
                   value={status}
-                  onChange={(e: any , newValue :any) => {
+                  onChange={(e: any, newValue: any) => {
                     setStatus(newValue);
                   }}
                   getOptionLabel={(option) => option.toString()} // Converts numbers to strings
@@ -196,6 +222,13 @@ function CategoryComponent() {
         onEdit={handleEdit}
         onDelete={handleDelete}
         onInfo={handleInfo}
+      />
+      <EditModal
+        editOpen={editOpen}
+        setEditOpen={setEditOpen}
+        selectedRow={selectedRow}
+        setSelectedRow={setSelectedRow}
+        setData={setData}
       />
     </div>
   );

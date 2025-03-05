@@ -110,3 +110,53 @@ export async function addCategory(
     throw error;
   }
 }
+
+export async function deleteCategoryTable(ids: string[]) {
+  try {
+    const response = await client.post(
+      `/category/delete-category`,
+      {
+        ids: ids,
+      },
+      {
+        headers: {
+          Authorization: "Bearer " + window.localStorage.getItem("loginToken"),
+        },
+      }
+    );
+    return response.data;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+}
+
+export async function EditCategoryTable(
+  categoryName: string,
+  description: string,
+  code: string,
+  status: string,
+  id: string
+) {
+  try {
+    const response = await client.put(
+      `/category/update-category/${id}`,
+      {
+        categoryName: categoryName,
+        description: description,
+        code: code,
+        status: status,
+      },
+      {
+        headers: {
+          Authorization: "Bearer " + window.localStorage.getItem("loginToken"),
+        },
+      }
+    );
+    console.log(response)
+    return response.data;
+  } catch (error) {
+    console.log(error);
+    throw error;
+  }
+}
