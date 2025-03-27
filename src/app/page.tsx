@@ -1,10 +1,11 @@
 "use client";
 import ButtonComponent from "@/components/core/Button";
 import InputComponent from "@/components/core/Input";
+import { useLoginMutation } from "@/services/authservices";
 import { loginUser } from "@/services/page";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { FormEvent, useState } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { toast } from "react-toastify";
 
@@ -14,24 +15,47 @@ export default function Login() {
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [login] = useLoginMutation();
 
-  const handleSubmit = async (e: any) => {
+  // const handleSubmit = async (e: any) => {
+  //   e.preventDefault();
+  //   try {
+  //     setLoading(true);
+  //     const response = await loginUser(email, password);
+  //     console.log("Login clicked", { email, password });
+  //     console.log(response)
+  //     if (response && response.statusCode === 200) {
+  //       const token = response.data.token;
+  //       console.log(token);
+  //       localStorage.setItem("loginToken", token);
+  //       toast.success("User Logged in Successfully");
+  //       router.push("/dashboard");
+  //     } else toast.error("Error while logging1");
+  //   } catch (error) {
+  //     console.error(error);
+  //     toast.error("Error while logging2");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
+
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     try {
-      setLoading(true);
-      const response = await loginUser(email, password);
-      console.log("Login clicked", { email, password });
-      console.log(response)
+      setLoading(true)
+      const response = await login({ email, password }).unwrap(); // Use unwrap to get response or error
+      console.log(response);
       if (response && response.statusCode === 200) {
         const token = response.data.token;
-        console.log(token);
         localStorage.setItem("loginToken", token);
         toast.success("User Logged in Successfully");
         router.push("/dashboard");
-      } else toast.error("Error while logging1");
+      } else {
+        toast.error("Error while logging in");
+      }
     } catch (error) {
+      toast.error("Error while logging in");
       console.error(error);
-      toast.error("Error while logging2");
     } finally {
       setLoading(false);
     }

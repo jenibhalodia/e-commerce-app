@@ -1,14 +1,13 @@
 "use client";
 import ButtonComponent from "@/components/core/Button";
 import InputComponent from "@/components/core/Input";
-// import { register } from "@/components/store/authSlice";
+import { useRegisterMutation } from "@/services/authservices";
 import { registrationAPI } from "@/services/page";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { toast } from "react-toastify";
-// import { useDispatch } from "react-redux";
 
 export default function Signup() {
   const [firstName, setFirstName] = useState("");
@@ -16,20 +15,16 @@ export default function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  // const dispatch = useDispatch();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [register] = useRegisterMutation();
+
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
-
-    // const token = "dummy-token";
-    // dispatch(register({ email, token }));
-    // router.push("/dashboard");
-
     try {
       setLoading(true);
-      const response = await registrationAPI(firstName,lastName, email, password);
+      const response = await register({firstName,lastName, email, password}).unwrap();
       console.log(response);
       console.log("Signup clicked", { email, password });
       if (response && response.statusCode === 201) {

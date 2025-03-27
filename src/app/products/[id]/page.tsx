@@ -6,49 +6,64 @@ import { toast } from "react-toastify";
 import ButtonComponent from "@/components/core/Button";
 import { useRouter } from "next/navigation";
 import withAuth from "@/lib/hoc/withAuth";
+import { useGetProductByIdQuery } from "@/services/productservices";
 
-interface Product {
-  productName: string;
-  description: string;
-  imageURL: string;
-  price: number;
-  category: string;
-  inStock: boolean;
-  _id: string;
-}
+// interface Product {
+//   productName: string;
+//   description: string;
+//   imageURL: string;
+//   price: number;
+//   category: string;
+//   inStock: boolean;
+//   _id: string;
+// }
 
 function Product() {
-  const [productData, setProductData] = useState<Product>();
-  const [loading , setLoading] = useState(false)
+  // const [productData, setProductData] = useState<Product>();
+  // const [loading , setLoading] = useState(false)
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  useEffect(() => {
-    if (id) {
-      fetchProductData(id);
-    }
-  }, [id]);
+  const {
+    data: productData,
+    error,
+    isLoading,
+  } = useGetProductByIdQuery(id || "");
 
-  const fetchProductData = async (_id: string) => {
-    try {
-      const response = await getProductId(_id);
-      console.log("Response:", response);
-      if (response && response.statusCode === 200) {
-        const product = response.data;
-        setProductData(product);
-        toast.success("Product details Successfully Loaded");
-      } else {
-        toast.error("Error while fetching Product details");
-      }
-    } catch (error) {
-      console.error("Error fetching product data:", error);
-    }
-  };
+  // useEffect(() => {
+  //   if (id) {
+  //     fetchProductData(id);
+  //   }
+  // }, [id]);
+
+  // const fetchProductData = async (_id: string) => {
+  //   try {
+  //     const response = await getProductId(_id);
+  //     console.log("Response:", response);
+  //     if (response && response.statusCode === 200) {
+  //       const product = response.data;
+  //       setProductData(product);
+  //       toast.success("Product details Successfully Loaded");
+  //     } else {
+  //       toast.error("Error while fetching Product details");
+  //     }
+  //   } catch (error) {
+  //     console.error("Error fetching product data:", error);
+  //   }
+  // };
+  if (isLoading) {
+    return <div>Loading product details...</div>;
+  }
+
+  if (error) {
+    return <div>Error fetching product details.</div>;
+  }
+  console.log(productData);
 
   return (
     <div className="flex flex-col mt-10 text-black bg-white h-screen p-10">
       <div className="flex justify-between">
         <div className="text-5xl font-bold text-black">
-          {productData?.productName}
+          {productData?.data?.productName}
         </div>
         <ButtonComponent
           label="Back"
@@ -63,27 +78,27 @@ function Product() {
           <div className="flex flex-row bg-white border rounded-lg p-6 shadow-lg">
             <div className="w-1/3">
               <img
-                src={productData.imageURL}
-                alt={productData.productName}
+                src={productData.data.imageURL}
+                alt={productData.data.productName}
                 className="w-full h-auto rounded-lg"
               />
             </div>
             <div className="w-2/3 pl-6">
               <h2 className="text-2xl font-semibold text-black">
-                {productData.productName}
+                {productData.data.productName}
               </h2>
               <p className="mt-4 text-gray-600">
-                {productData.description
-                  ? productData.description
+                {productData.data.description
+                  ? productData.data.description
                   : "No Description available"}
               </p>
               <div className="mt-4 text-lg flex gap-2">
                 Category:
-                <div className="text-gray-600">{productData.category}</div>
+                <div className="text-gray-600">{productData.data.category}</div>
               </div>
               <div className="mt-4 text-lg flex gap-2">
                 Price:
-                <div className="text-gray-600">{productData.price}</div>
+                <div className="text-gray-600">{productData.data.price}</div>
               </div>
               <div className="mt-4 text-lg flex gap-2">
                 Stock:
@@ -98,8 +113,8 @@ function Product() {
                 size="medium"
                 className="mt-10"
                 label="Add to Cart"
-                disabled= {loading}
-                loading=  {loading}
+                disabled={isLoading}
+                loading={isLoading}
               />
             </div>
           </div>
