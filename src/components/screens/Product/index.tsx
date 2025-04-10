@@ -19,6 +19,7 @@ interface Product {
 
 function ProductComponent() {
   const { data, error, isLoading } = useGetProductsQuery();
+  
 
   // const [data, setData] = useState([]);
   // const [loading, setLoading] = useState(false)

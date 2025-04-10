@@ -1,5 +1,9 @@
 import ButtonComponent from "@/components/core/Button";
 import InputComponent from "@/components/core/Input";
+import {
+  useEditCategoryTableMutation,
+  useGetCategoryTableQuery,
+} from "@/services/categoryservice";
 import { getCategoryTable, EditCategoryTable } from "@/services/page";
 import { Autocomplete, Box, Modal, TextField } from "@mui/material";
 import React from "react";
@@ -14,28 +18,30 @@ function EditModal({
   setData,
 }: any) {
   const Status = ["Active", "Inactive"];
-
+  const [editCategory, { isLoading, isError, error }] =useEditCategoryTableMutation();
+  const { refetch } = useGetCategoryTableQuery();
+  
   const handleSaveEdit = async () => {
     try {
-      const response = await EditCategoryTable(
-        selectedRow.categoryName,
-        selectedRow.description,
-        selectedRow.code,
-        selectedRow.status,
-        selectedRow.id
-      );
+      const response = await editCategory({
+        categoryName: selectedRow.categoryName,
+        description: selectedRow.description,
+        code: selectedRow.code,
+        status: selectedRow.status,
+        id: selectedRow.id,
+      }).unwrap();
       console.log("response", response);
       if (response.statusCode === 200) {
-        const newData = await getCategoryTable();
-        console.log("newdata", newData);
-        if (newData.statusCode === 200) {
-          setData(newData.data);
-          toast.success("Category updated");
-          setEditOpen(false); 
-          setSelectedRow(null); 
-        } else {
-          toast.error("Error while updating category");
-        }
+        // const newData = await getCategoryTable();
+        // console.log("newdata", newData);
+        // if (newData.statusCode === 200) {
+        //   setData(newData.data);
+        await refetch();
+        toast.success("Category updated");
+        setEditOpen(false);
+        setSelectedRow(null);
+      } else {
+        toast.error("Error while updating category");
       }
     } catch (error) {
       toast.error("Error while updating category");
@@ -117,6 +123,7 @@ function EditModal({
                 label="Save"
                 variant="contained"
                 onClick={handleSaveEdit}
+                disabled={isLoading}
               />
             </div>
           </div>

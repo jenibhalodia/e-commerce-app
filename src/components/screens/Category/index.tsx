@@ -5,13 +5,18 @@ import { Autocomplete, Box, Modal, TextField } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import { ImCross } from "react-icons/im";
 import InputComponent from "@/components/core/Input";
-import {
-  addCategory,
-  deleteCategoryTable,
-  getCategoryTable,
-} from "@/services/page";
+// import {
+//   addCategory,
+//   deleteCategoryTable,
+//   getCategoryTable,
+// } from "@/services/page";
 import { toast } from "react-toastify";
 import EditModal from "./editmodal";
+import {
+  useAddCategoryMutation,
+  useDeleteCategoryTableMutation,
+  useGetCategoryTableQuery,
+} from "@/services/categoryservice";
 
 function CategoryComponent() {
   interface TableHeader {
@@ -33,14 +38,18 @@ function CategoryComponent() {
   const [categoryName, setCategoryName] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState("");
-  const [data, setData] = useState([]);
-  const [columns, setColumns] = useState<TableHeader[]>([]);
+  // const [data, setData] = useState([]);
+  // const [columns, setColumns] = useState<TableHeader[]>([]);
   const handleOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
   const [selectedRow, setSelectedRow] = useState<any>(null);
   const [editOpen, setEditOpen] = useState(false);
 
-  const handleEdit =(row: any) => {
+  const { data, isLoading, error, refetch } = useGetCategoryTableQuery();
+  const [addCategory] = useAddCategoryMutation();
+  const [deleteCategoryTable] = useDeleteCategoryTableMutation();
+
+  const handleEdit = (row: any) => {
     console.log("Edit clicked", row);
     setSelectedRow(row);
     setEditOpen(true);
@@ -49,22 +58,19 @@ function CategoryComponent() {
   const handleDelete = async (row: any) => {
     const _id = Array.isArray(row.id) ? row.id : [row.id];
     console.log("Delete clicked", row.id);
+    
     try {
-      const response = await deleteCategoryTable(_id);
+      const response = await deleteCategoryTable({ids:_id}).unwrap();
       console.log("response", response);
       if (response.statusCode === 200) {
-        const newData = await getCategoryTable();
-        console.log("newdata", newData);
-        if (newData.statusCode === 200) {
-          setData(newData.data);
-          toast.success("Category deleted");
-        } else {
-          toast.error("Error while deleting category");
-        }
+        await refetch();
+        toast.success("Category deleted");
       } else {
         toast.error("Error while deleting category");
       }
-    } catch (error) {}
+    } catch (error) {
+      toast.error("Error while deleting category");
+    }
   };
 
   const handleInfo = (row: any) => {
@@ -73,55 +79,67 @@ function CategoryComponent() {
 
   const handleSave = async () => {
     try {
-      const response = await addCategory(
+      const response = await addCategory({
         categoryName,
         description,
         code,
-        status
-      );
+        status,
+      }).unwrap();
       console.log("response", response);
       if (response.statusCode === 201) {
-        const newData = await getCategoryTable();
-        console.log("newdata", newData);
-        if (newData.statusCode === 200) {
-          setData(newData.data);
-          toast.success("New Category added");
-          setOpen(false);
-          setCategoryName("");
-          setCode("");
-          setStatus("");
-          setDescription("");
-        } else {
-          toast.error("Error while creating new category");
-        }
+        // const newData = await getCategoryTable();
+        // console.log("newdata", newData);
+        // if (newData.statusCode === 200) {
+        // setData(newData.data);
+        await refetch();
+        toast.success("New Category added");
+        setOpen(false);
+        setCategoryName("");
+        setCode("");
+        setStatus("");
+        setDescription("");
       } else {
         toast.error("Error while creating new category");
       }
+      // } else {
+      //   toast.error("Error while creating new category");
+      // }
     } catch (error) {
       toast.error("Error while creating new category");
     }
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
-    try {
-      const response = await getCategoryTable();
-      console.log("response", response);
-      if (response.statusCode === 200) {
-        setColumns(TABLE_HEAD);
-        setData(response.data);
-      } else {
-        console.log("Error fetching table");
-        toast.error("Error fetching table");
-      }
-    } catch (error) {
-      console.log("Error while fetching data", error);
-      toast.error("Error fetching table");
+    // fetchData();
+    if (data) {
+      console.log("Fetched categories:", data);
     }
-  };
+  }, [data]);
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (error) {
+    return <div>Error fetching categories</div>;
+  }
+
+  // const fetchData = async () => {
+  //   try {
+  //     const response = await getCategoryTable();
+  //     console.log("response", response);
+  //     if (response.statusCode === 200) {
+  //       setColumns(TABLE_HEAD);
+  //       setData(response.data);
+  //     } else {
+  //       console.log("Error fetching table");
+  //       toast.error("Error fetching table");
+  //     }
+  //   } catch (error) {
+  //     console.log("Error while fetching data", error);
+  //     toast.error("Error fetching table");
+  //   }
+  // };
 
   return (
     <div className="flex flex-col  mt-16 text-black bg-white h-screen p-10">
@@ -217,8 +235,8 @@ function CategoryComponent() {
         {/* MODAL */}
       </div>
       <TableComponent
-        data={data}
-        columns={columns}
+        data={data?.data || []}
+        columns={TABLE_HEAD}
         onEdit={handleEdit}
         onDelete={handleDelete}
         onInfo={handleInfo}
@@ -228,7 +246,7 @@ function CategoryComponent() {
         setEditOpen={setEditOpen}
         selectedRow={selectedRow}
         setSelectedRow={setSelectedRow}
-        setData={setData}
+        // setData={setData}
       />
     </div>
   );
